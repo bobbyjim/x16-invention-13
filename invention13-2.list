@@ -1,0 +1,517 @@
+? chr$(147) "\x11\x11" spc(33) "introducing..."
+rem
+rem this is a demo using the first 13 bars of bach's invention 13
+rem i.e. the part of the song used by cbm in their ads.
+rem
+rem read in the logo
+rem
+POKE $9F29,($40 OR PEEK($9F29)) :REM ENABLE SPRITES
+for ss = 0 to 16
+S0 = $FC10 + SS * 8             :REM OFFSET
+VPOKE $F, S0+0, %00000000       :REM LSB
+VPOKE $F, S0+1, %10000010       :REM MODE=8BPP(7) =$04000(0-3+LSB:5)
+CO = int(ss/8)
+ro = (ss/8-INT(SS/8))*8
+X = co * 576
+Y = ro * 64
+VPOKE $F, S0+2, X AND 255       :REM X
+VPOKE $F, S0+3, X  / 256        :REM (X MSB)
+VPOKE $F, S0+4, Y AND 255       :REM Y
+VPOKE $F, S0+5, Y  / 256        :REM (Y MSB)
+FL=ss and 3
+PO=0
+VPOKE $F, S0+6, %00001100+FL    :REM NO COLLISION, Z = LAYER 2, FLIP (FL)
+VPOKE $F, S0+7, %11110000+PO    :REM H=64(6-7), W=64(4-5), PALETTE OFFSET
+next ss
+
+rem now deal with the center image
+s0 = $fc10 + 16 * 8
+x  = 288
+y  = 50
+vpoke $f, s0+2, x and 255
+vpoke $f, s0+3, x/256
+vpoke $f, s0+4, y and 255
+vpoke $f, s0+5, y/256
+vpoke $f, s0+6, %00001100
+
+rem now set up the vera data port for auto-increment +1 at $4000
+vpoke %10000,$4000,0
+;poke $9f20,$00
+;poke $9f21,$40
+;poke $9f22,16 :rem auto-increment to 1, high addr bit 0
+rem VPOKE $0, $4000, X
+{:read runlength data}
+READ X,RL :IF X<0 GOTO {:play music}
+FOR Y=1 TO RL
+poke $9f23, x
+NEXT
+GOTO {:read runlength data}
+
+rem
+rem  logo, runlength encoded, because i care.
+rem
+DATA $00,1,$12,1,$AE,1,$91,57,$14,1,$16,1,$14,1,$00,1
+DATA $12,1,$C9,61,$AE,1,$14,2,$C9,62,$17,1,$C9,5,$16,1
+DATA $CA,1,$C9,50,$CB,1,$14,1,$91,1,$14,1,$C9,2,$AF,1
+DATA $C9,5,$CA,1,$E9,1,$16,1,$C9,48,$E7,1,$E9,1,$C9,5
+DATA $AF,1,$C9,6,$E8,1,$E9,1,$CB,1,$C9,46,$E8,1,$E9,1
+DATA $E7,1,$C9,5,$AF,1,$C9,6,$E7,1,$E9,2,$E7,1,$C9,43
+DATA $B5,1,$E8,1,$E9,2,$CA,1,$C9,5,$AF,1,$C9,6,$CA,1
+DATA $CD,3,$CC,1,$91,1,$C9,40,$CA,1,$CD,4,$C9,6,$AF,1
+DATA $C9,7,$CC,1,$CD,3,$B0,1,$B5,1,$C9,38,$CA,1,$CC,1
+DATA $CD,3,$CB,1,$C9,6,$AF,1,$C9,7,$AF,1,$B1,4,$B0,1
+DATA $AE,1,$C9,36,$B6,1,$B0,1,$B1,4,$AE,1,$C9,6,$AF,1
+DATA $C9,7,$AE,1,$B8,6,$B6,1,$C9,34,$AF,1,$B8,6,$91,1
+DATA $C9,6,$AF,1,$C9,8,$B8,7,$B6,1,$C9,31,$91,1,$B7,1
+DATA $B8,6,$B7,1,$C9,7,$AF,1,$C9,8,$B7,1,$B8,7,$B7,1
+DATA $C9,29,$B5,1,$B7,1,$B8,7,$B6,1,$C9,7,$AF,1,$C9,8
+DATA $B6,1,$A2,8,$A1,1,$B5,1,$C9,26,$B5,1,$A2,9,$B5,1
+DATA $C9,7,$AF,1,$C9,8,$B5,1,$B8,10,$B5,1,$C9,24,$B6,1
+DATA $B8,10,$C9,8,$AF,1,$C9,9,$B8,11,$AE,1,$C9,22,$B7,1
+DATA $B8,10,$B7,1,$C9,8,$AF,1,$C9,9,$B7,1,$B9,11,$B6,1
+DATA $C9,20,$B8,1,$B9,11,$AE,1,$C9,8,$AF,1,$C9,9,$AE,1
+DATA $9C,12,$9B,1,$C9,17,$B5,1,$B8,1,$9C,12,$C9,9,$AF,1
+DATA $C9,10,$9C,1,$95,12,$B8,1,$91,1,$C9,14,$AE,1,$9C,1
+DATA $95,12,$B8,1,$C9,9,$AF,1,$C9,10,$B8,1,$9D,13,$9C,1
+DATA $B5,1,$C9,12,$B6,1,$95,1,$9D,13,$AF,1,$C9,9,$AF,1
+DATA $C9,10,$AF,1,$9D,14,$95,1,$AE,1,$C9,10,$93,1,$9D,15
+DATA $B5,1,$C9,9,$AF,1,$C9,10,$B5,1,$9D,1,$03,14,$9D,1
+DATA $AF,1,$C9,8,$9B,1,$03,15,$9C,1,$C9,10,$AF,1,$C9,11
+DATA $9C,1,$03,16,$93,1,$C9,5,$91,1,$9C,1,$03,16,$93,1
+DATA $C9,10,$AF,1,$C9,11,$AE,1,$9B,1,$95,1,$9D,15,$9A,1
+DATA $C9,4,$94,1,$9D,15,$9C,1,$9B,1,$B5,1,$C9,10,$AF,1
+DATA $C9,14,$AE,1,$9A,1,$9B,1,$9C,1,$95,11,$9A,1,$C9,4
+DATA $9C,1,$95,11,$9C,1,$9B,1,$9A,1,$B5,1,$C9,13,$AF,1
+DATA $C9,17,$91,1,$92,1,$9B,1,$9C,9,$9A,1,$C9,4,$9B,1
+DATA $9C,8,$9B,1,$9A,1,$AE,1,$C9,17,$AF,1,$C9,21,$B5,1
+DATA $9A,1,$9B,1,$9C,5,$9A,1,$C9,4,$9B,1,$9C,5,$9B,1
+DATA $92,1,$91,1,$C9,20,$AF,1,$C9,24,$99,1,$A3,4,$9A,1
+DATA $C9,4,$9B,1,$A3,3,$9B,1,$91,1,$C9,23,$AF,1,$C9,24
+DATA $99,1,$80,4,$99,1,$C9,4,$9A,1,$80,4,$C9,24,$AF,1
+DATA $C9,24,$99,1,$80,4,$99,1,$C9,4,$7F,1,$80,4,$C9,24
+DATA $AF,1,$C9,24,$76,1,$7F,4,$7E,1,$C9,4,$7F,5,$C9,24
+DATA $AF,1,$C9,24,$7E,1,$80,4,$7E,1,$C9,4,$7F,1,$80,3
+DATA $7F,1,$91,1,$C9,23,$AF,1,$C9,21,$14,1,$62,1,$63,1
+DATA $64,5,$7E,1,$C9,4,$63,1,$64,5,$7F,1,$5A,1,$91,1
+DATA $C9,20,$AF,1,$C9,18,$14,1,$62,1,$63,1,$64,8,$62,1
+DATA $C9,4,$63,1,$64,8,$63,1,$3E,1,$91,1,$C9,17,$AF,1
+DATA $C9,15,$14,1,$62,1,$64,12,$62,1,$C9,4,$63,1,$64,11
+DATA $63,1,$3E,1,$14,1,$C9,14,$AF,1,$C9,13,$15,1,$47,1
+DATA $48,14,$5A,1,$C9,4,$63,1,$48,14,$63,1,$91,1,$C9,12
+DATA $AF,1,$C9,13,$3F,1,$48,14,$3E,1,$C9,6,$3F,1,$48,14
+DATA $5A,1,$C9,12,$AF,1,$C9,13,$47,1,$07,12,$48,1,$15,1
+DATA $C9,8,$46,1,$48,1,$07,12,$46,1,$C9,12,$AF,1,$C9,13
+DATA $49,12,$48,1,$14,1,$C9,10,$3E,1,$49,12,$47,1,$C9,12
+DATA $AF,1,$C9,12,$15,1,$49,11,$48,1,$14,1,$C9,12,$15,1
+DATA $49,11,$48,1,$C9,12,$AF,1,$C9,12,$46,1,$49,10,$47,1
+DATA $91,1,$C9,14,$14,1,$48,1,$49,10,$14,1,$C9,11,$AF,1
+DATA $C9,12,$47,1,$49,9,$47,1,$C9,17,$14,1,$48,1,$49,9
+DATA $3E,1,$C9,11,$AF,1,$C9,12,$08,1,$49,8,$46,1,$C9,20
+DATA $47,1,$49,8,$46,1,$C9,11,$AF,1,$C9,12,$08,8,$3E,1
+DATA $C9,22,$46,1,$08,8,$C9,11,$AF,1,$C9,11,$22,1,$2D,6
+DATA $08,1,$22,1,$C9,24,$2A,1,$08,1,$2D,5,$08,1,$C9,11
+DATA $AF,1,$C9,11,$2A,1,$2D,5,$08,1,$14,1,$C9,26,$22,1
+DATA $08,1,$2D,5,$14,1,$C9,10,$AF,1,$C9,11,$2B,1,$2D,4
+DATA $2C,1,$E5,1,$C9,28,$22,1,$08,1,$2D,4,$22,1,$C9,10
+DATA $AF,1,$C9,11,$2C,1,$2D,3,$2B,1,$C9,31,$14,1,$2C,1
+DATA $2D,3,$2B,1,$C9,10,$AF,1,$C9,11,$34,1,$2D,2,$2B,1
+DATA $C9,33,$E5,1,$2C,1,$2D,2,$2C,1,$C9,10,$AF,1,$C9,10
+DATA $22,1,$34,2,$2A,1,$C9,36,$2B,1,$34,2,$C9,10,$AF,1
+DATA $C9,10,$2A,1,$34,1,$22,1,$C9,38,$2B,1,$34,1,$E5,1
+DATA $C9,9,$AF,1,$C9,10,$2B,1,$22,1,$C9,40,$2A,1,$22,1
+DATA $C9,9,$AF,1,$C9,63,$AF,1,$C9,63,$AF,1,$C9,63,$AF,1
+DATA $C9,46,$AE,1,$91,1,$C9,3,$91,1,$AE,1,$C9,10,$AF,1
+DATA $C9,6,$18,1,$1A,2,$AE,1,$18,1,$1A,1,$19,1,$16,1
+DATA $17,1,$18,1,$C9,1,$14,1,$19,1,$AE,1,$19,1,$AE,1
+DATA $C9,1,$17,1,$18,1,$C9,1,$AE,1,$B0,1,$C9,1,$14,1
+DATA $19,1,$AE,1,$C9,1,$17,2,$1A,2,$17,1,$91,1,$19,1
+DATA $1A,1,$19,1,$AF,1,$1A,2,$19,1,$AE,1,$1D,1,$AE,1
+DATA $C9,1,$AE,1,$1D,1,$16,1,$19,1,$14,1,$19,1,$1A,1
+DATA $19,1,$C9,5,$AF,1,$C9,5,$AE,1,$1B,1,$AE,2,$AF,1
+DATA $1A,1,$AE,2,$1C,3,$B5,1,$19,1,$1D,1,$18,1,$1D,1
+DATA $1A,1,$91,1,$1C,2,$C9,1,$1C,1,$1A,1,$17,1,$AE,1
+DATA $1C,2,$91,1,$1B,2,$16,1,$AE,1,$1C,1,$19,1,$1A,1
+DATA $17,2,$19,1,$18,1,$AE,1,$1B,1,$AE,1,$1C,1,$1E,1
+DATA $16,1,$1E,1,$1B,1,$C9,1,$1C,1,$19,1,$1A,1,$AF,1
+DATA $16,1,$C9,5,$AF,1,$C9,5,$AE,1,$1A,1,$C9,2,$AF,1
+DATA $19,1,$C9,1,$91,1,$1C,1,$1B,1,$17,1,$19,1,$1C,1
+DATA $19,1,$18,1,$1A,1,$1C,1,$19,1,$18,1,$1B,1,$AF,1
+DATA $1D,1,$19,1,$1D,1,$16,1,$1A,1,$18,1,$1A,1,$1B,2
+DATA $B5,1,$C9,1,$1C,1,$19,1,$1B,1,$18,2,$19,1,$1C,1
+DATA $1B,1,$1D,1,$91,1,$B5,1,$1A,1,$19,1,$1A,1,$91,1
+DATA $C9,1,$1B,1,$19,1,$1A,1,$17,1,$1C,1,$91,1,$C9,4
+DATA $AF,1,$C9,5,$91,1,$1B,3,$16,1,$1B,3,$18,1,$19,1
+DATA $C9,1,$1A,1,$17,2,$AF,1,$18,1,$AF,1,$1B,1,$91,1
+DATA $19,1,$1A,1,$AE,1,$B5,1,$18,1,$17,1,$18,1,$C9,1
+DATA $19,3,$1B,2,$19,1,$AE,1,$1B,3,$18,1,$AE,1,$C9,1
+DATA $1A,1,$14,1,$1C,1,$1B,1,$91,1,$1B,2,$C9,1,$19,1
+DATA $AE,1,$1B,3,$C9,5,$AF,1,$C9,47,$18,1,$C9,3,$18,1
+DATA $C9,11,$17,1,$AE,1,$C9,62,$17,1,$13,1,$14,1,$C9,60
+DATA $16,1,$14,1,$00,1,$14,1,$16,58,$AF,1,$17,1,$14,1
+DATA -1,-1
+
+rem
+rem  okay enough fooling around, let's play some music
+rem
+{:play music}
+poke $9f22,0 :rem set vera auto-increment to 0
+
+sk = 0            :rem skip notes
+te = 1000         :rem tempo
+sg = $f9c0        :rem psg
+rem  sg           :rem freq lo
+rem  sg+1         :rem freq hi
+rem  sg+2         :rem vol
+rem  sg+3         :rem waveform duty cycle
+lr = %11000000    :rem stereo
+w(0) = %00000000  :rem waveform 1
+w(1) = %10000000  :rem waveform 2
+w(2) = %11000000  :rem waveform 3
+pu = 63           :rem pulse duty cycle = 50%
+
+rem 
+rem notes
+rem
+dim no$(61)
+for x=0 to 61 :read no$(x) :next
+data 0,0
+data c2,cs2,d2,ds2,e2,f2,fs2,g2,gs2,a2,as2,b2
+data c3,cs3,d3,ds3,e3,f3,fs3,g3,gs3,a3,as3,b3
+data c4,cs4,d4,ds4,e4,f4,fs4,g4,gs4,a4,as4,b4
+data c5,cs5,d5,ds5,e5,f5,fs5,g5,gs5,a5,as5,b5
+data c6,cs6,d6,ds6,e6,f6,fs6,g6,gs6,a6,as6,b6
+rem 
+rem frequencies
+rem
+dim fr(61)
+for x=0 to 54 :read fr(x) :next
+rem  off 
+data 0
+REM   C2     , Cs2    , d2     , ds2    , e2     , f2     
+DATA  175.60 , 186.04 , 197.10 , 208.81 , 221.23 , 234.39 
+REM   fs2    , g2     , gs2    , a2     , as2    , b2     
+DATA  248.32 , 263.09 , 278.74 , 295.30 , 312.86 , 331.46 
+REM   C3     , Cs3    , d3     , ds3    , e3     , f3     
+DATA  351.17 , 372.05 , 394.17 , 417.61 , 442.44 , 468.75 
+REM   fs3    , g3     , gs3    , a3     , as3    , b3     
+DATA  496.64 , 526.17 , 557.45 , 590.60 , 625.72 , 662.93 
+REM   c4     , cs4    , d4     , ds4    , e4     , f4     
+DATA  702.36 , 744.11 , 788.35 , 835.25 , 884.91 , 937.53 
+REM   fs4    , g4     , gs4    , a4     , as4    , b4     
+DATA  993.26 , 1052.35, 1114.90, 1181.21, 1251.44, 1325.85
+REM   c5     , cs5    , d5     , ds5    , e5     , f5     
+DATA  1404.70, 1488.24, 1576.72, 1670.47, 1769.80, 1875.06
+REM   fs5    , g5     , gs5    , a5     , as5    , b5     
+DATA  1986.55, 2104.67, 2229.83, 2362.42, 2502.90, 2651.73
+REM   c6     , cs6    , d6     , ds6    , e6     , f6     
+DATA  2809.40, 2976.46, 3153.45, 3340.97, 3539.62, 3750.09
+
+rem
+rem set voices
+rem
+for i = 0 to 2
+   sr = sg + 16 * i
+   vpoke 1,sr,0
+   vpoke 1,sr+1,0
+   v = 63 :rem vol
+   vpoke 1,sr+2, lr + v
+   vpoke 1,sr+3, w(i) + pu
+next
+
+rem
+rem play loop
+rem
+sp$(0) = "          the commander x16\x11\x11\x11"
+sp$(1) = "    wd65c02s @ 8mhz"
+sp$(2) = "    512k rom"
+sp$(3) = "    128k video ram"
+sp$(4) = "    kernal with 16 bit abi"
+sp$(5) = "    ps/2 and snes"
+sp$(6) = "    iec and sd i/o"
+sp$(7) = "    expansion slots"
+sp$(8) = "\x11\x11\x11 the perfect retro computing gift!"
+sp$(9) = "          coming in 2022!"
+
+sp = 0
+? chr$(147) "\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11"
+{:loop}
+   read p(0),p(1)
+   if p(0)=-255 goto {:done}
+   if sk>0 then sk=sk-1 :goto {:loop}
+   rem just for fun, print the notes
+   rem print no$(p(0)), no$(p(1))  
+   rem goto {:loop}
+
+   for i = 0 to 1
+      sr = sg + 16 * i
+      f = fr(p(i))
+      fl = f and 255
+      fh = int(f/256)
+      vpoke 1,sr+0 ,fl
+      vpoke 1,sr+1 ,fh
+   next
+
+   for x = 1 to te :next :rem quantize timer
+
+   rem
+   rem  work the sales pitch
+   rem  (seven key points)
+   rem
+   if sp/15 = int(sp/15) and sp/15 < 10 then ? spc(21) sp$(sp/15) "\x11"
+   sp=sp+1
+
+   rem 
+   rem  and do some random flipping
+   rem 
+   s0 = p(1) and 15
+   fl = p(0) and 3
+   s0 = $fc10 + s0 * 8
+   vpoke $f, s0+6, %00001100 + fl
+   
+   goto {:loop}
+
+rem 
+rem done - turn off voices
+rem
+{:done}
+for i = 0 to 2
+   sr = sg + 16 * i
+   vpoke 1,sr+2,0
+   vpoke 1,sr+3,0
+next
+
+for ss = 0 to 15
+   S0 = $FC10 + SS * 8       :REM OFFSET
+   vpoke $f, s0+6, %00000000 :rem sprite off
+next
+
+end
+
+
+rem
+rem note frequency data per voice
+rem
+rem bar 1
+DATA 0,11  :rem 0, a2
+DATA 30,11  :rem e4, a2
+DATA 35,23  :rem a4, a3
+DATA 38,23  :rem c5, a3
+DATA 37,23  :rem b4, a3
+DATA 30,23  :rem e4, a3
+DATA 37,22  :rem b4, gs3
+DATA 40,22  :rem d5, gs3
+DATA 38,23  :rem c5, a3
+DATA 38,18  :rem c5, e3
+DATA 42,23  :rem e5, a3
+DATA 42,26  :rem e5, c4
+DATA 34,25  :rem gs4, b3
+DATA 34,18  :rem gs4, e3
+DATA 42,25  :rem e5, b3
+DATA 42,28  :rem e5, d4
+rem bar 2
+DATA 35,26  :rem a4, c3
+DATA 30,26  :rem e4, c3
+DATA 35,23  :rem a4, a2
+DATA 38,23  :rem c5, a2
+DATA 37,22  :rem b4, gs3
+DATA 30,22  :rem e4, gs3
+DATA 37,18  :rem b4, e3
+DATA 40,18  :rem d5, e3
+DATA 38,23  :rem c5, a3
+DATA 38,18  :rem c5, e3
+DATA 35,23  :rem a4, a3
+DATA 35,26  :rem a4, c4
+DATA 0,25  :rem 0, b3
+DATA 0,18  :rem 0, e3
+DATA 0,25  :rem 0, b3
+DATA 0,28  :rem 0, d4
+rem bar 3
+DATA 0,26  :rem 0, c4
+DATA 42,26  :rem e5, c4
+DATA 38,23  :rem c5, a3
+DATA 42,23  :rem e5, a3
+DATA 35,26  :rem a4, c4
+DATA 38,26  :rem c5, c4
+DATA 30,23  :rem e4, a3
+DATA 33,23  :rem g4, a3
+DATA 31,28  :rem f4, d4
+DATA 31,23  :rem f4, a3
+DATA 35,19  :rem a4, f3
+DATA 35,23  :rem a4, a3
+DATA 40,16  :rem d5, d3
+DATA 40,19  :rem d5, f3
+DATA 43,11  :rem f5, a2
+DATA 43,14  :rem f5, c3
+rem bar 4
+DATA 43,13  :rem f5, b2
+DATA 40,13  :rem d5, b2
+DATA 37,16  :rem b4, d3
+DATA 40,16  :rem d5, d3
+DATA 33,21  :rem g4, g3
+DATA 37,21  :rem b4, g3
+DATA 28,25  :rem d4, b3
+DATA 31,25  :rem f4, b3
+DATA 30,25  :rem e4, b3
+DATA 30,21  :rem e4, g3
+DATA 33,18  :rem g4, e3
+DATA 33,21  :rem g4, g3
+DATA 38,14  :rem c5, c3
+DATA 38,18  :rem c5, e3
+DATA 42,9  :rem e5, g2
+DATA 42,13  :rem e5, b2
+rem bar 5
+DATA 42,11  :rem e5, a2
+DATA 38,11  :rem c5, a2
+DATA 35,14  :rem a4, c3
+DATA 38,14  :rem c5, c3
+DATA 31,16  :rem f4, d3
+DATA 31,19  :rem f4, f3
+DATA 40,13  :rem d5, b2
+DATA 40,16  :rem d5, d3
+DATA 40,9  :rem d5, g2
+DATA 37,9  :rem b4, g2
+DATA 33,13  :rem g4, b2
+DATA 37,13  :rem b4, b2
+DATA 30,14  :rem e4, c3
+DATA 30,18  :rem e4, e3
+DATA 38,11  :rem c5, a2
+DATA 38,14  :rem c5, c3
+rem bar 6
+DATA 38,7  :rem c5, f2
+DATA 35,7  :rem a4, f2
+DATA 31,4  :rem f4, d2
+DATA 35,4  :rem a4, d2
+DATA 28,9  :rem d4, g2
+DATA 28,21  :rem d4, g3
+DATA 37,19  :rem b4, f3
+DATA 37,21  :rem b4, g3
+DATA 38,11  :rem c5, a2
+DATA 38,21  :rem c5, g3
+DATA 0,26  :rem 0, c4
+DATA 0,30  :rem 0, e4
+DATA 0,28  :rem 0, d4
+DATA 0,21  :rem 0, g3
+DATA 0,28  :rem 0, d4
+DATA 0,31  :rem 0, f4
+rem bar 7
+DATA 0,30  :rem 0, e4
+DATA 33,30  :rem g4, e4
+DATA 38,26  :rem c5, c4
+DATA 42,26  :rem e5, c4
+DATA 40,25  :rem d5, b3
+DATA 33,25  :rem g4, b3
+DATA 40,21  :rem d5, g3
+DATA 43,21  :rem f5, g3
+DATA 42,26  :rem e5, c4
+DATA 42,21  :rem e5, g3
+DATA 45,26  :rem g5, c4
+DATA 45,30  :rem g5, e4
+DATA 37,28  :rem b4, d4
+DATA 37,21  :rem b4, g3
+DATA 45,28  :rem g5, d4
+DATA 45,31  :rem g5, f4
+rem bar 8
+DATA 38,30  :rem c5, e4
+DATA 33,30  :rem g4, e4
+DATA 38,26  :rem c5, c4
+DATA 42,26  :rem e5, c4
+DATA 40,0  :rem d5, 0
+DATA 33,0  :rem g4, 0
+DATA 40,0  :rem d5, 0
+DATA 43,0  :rem f5, 0
+DATA 42,0  :rem e5, 0
+DATA 42,33  :rem e5, g4
+DATA 38,30  :rem c5, e4
+DATA 38,33  :rem c5, g4
+DATA 45,26  :rem g5, c4
+DATA 45,30  :rem g5, e4
+DATA 42,21  :rem e5, g3
+DATA 42,25  :rem e5, b3
+rem bar 9
+DATA 50,23  :rem c6, a3
+DATA 47,23  :rem a5, a3
+DATA 42,26  :rem e5, c4
+DATA 47,26  :rem a5, c4
+DATA 38,30  :rem c5, e4
+DATA 42,30  :rem e5, e4
+DATA 35,33  :rem a4, g4
+DATA 38,33  :rem c5, g4
+DATA 40,32  :rem d5, fs4
+DATA 40,35  :rem d5, a4
+DATA 44,28  :rem fs5, d4
+DATA 44,32  :rem fs5, fs4
+DATA 47,23  :rem a5, a3
+DATA 47,28  :rem a5, d4
+DATA 50,20  :rem c6, fs3
+DATA 50,35  :rem c6, a4
+rem bar 10
+DATA 49,21  :rem b5, g3
+DATA 45,21  :rem g5, g3
+DATA 40,25  :rem d5, b3
+DATA 45,25  :rem g5, b3
+DATA 37,28  :rem b4, d4
+DATA 40,28  :rem d5, d4
+DATA 33,32  :rem g4, fs4
+DATA 37,32  :rem b4, fs4
+DATA 38,30  :rem c5, e4
+DATA 38,32  :rem c5, fs4
+DATA 42,26  :rem e5, c4
+DATA 42,30  :rem e5, e4
+DATA 45,21  :rem g5, g3
+DATA 45,26  :rem g5, c4
+DATA 49,18  :rem b5, e3
+DATA 49,21  :rem b5, g3
+rem bar 11
+DATA 47,20  :rem a5, fs3
+DATA 44,20  :rem fs5, fs3
+DATA 41,23  :rem ds5, a3
+DATA 44,23  :rem fs5, a3
+DATA 37,25  :rem b4, b3
+DATA 40,25  :rem d5, b3
+DATA 32,29  :rem fs4, ds4
+DATA 35,29  :rem a4, ds4
+DATA 33,0  :rem g4, 0
+DATA 33,30  :rem g4, e4
+DATA 45,26  :rem g5, c4
+DATA 45,30  :rem g5, e4
+DATA 45,23  :rem g5, a3
+DATA 42,26  :rem e5, c4
+DATA 38,30  :rem c5, e4
+DATA 42,33  :rem e5, g4
+rem bar 12
+DATA 35,32  :rem a4, fs4
+DATA 35,28  :rem a4, d4
+DATA 44,25  :rem fs5, b3
+DATA 44,28  :rem fs5, d4
+DATA 44,21  :rem fs5, g3
+DATA 40,25  :rem d5, b3
+DATA 37,28  :rem b4, d4
+DATA 40,32  :rem d5, fs4
+DATA 33,30  :rem g4, e4
+DATA 33,26  :rem g4, c4
+DATA 42,23  :rem e5, a3
+DATA 42,26  :rem e5, c4
+DATA 42,20  :rem e5, fs3
+DATA 38,23  :rem c5, a3
+DATA 35,26  :rem a4, c4
+DATA 38,26  :rem c5, c4
+rem bar 13
+DATA 32,26  :rem fs4, c4
+DATA 45,25  :rem g5, b3
+DATA 44,26  :rem fs5, c4
+DATA 42,25  :rem e5, b3
+DATA 41,26  :rem ds5, c4
+DATA 44,26  :rem fs5, c4
+DATA 37,13  :rem b4, b2
+DATA 41,13  :rem ds5, b2
+DATA 42,18  :rem e5, e3
+DATA 42,30  :rem e5, e4
+DATA 0,25  :rem 0, b3
+DATA 0,21  :rem 0, g3
+DATA 0,18  :rem 0, e3
+DATA 0,13  :rem 0, b2
+DATA 0,13  :rem 0, b2
+DATA 0,13  :rem 0, b2
+data -255,-255
+
+

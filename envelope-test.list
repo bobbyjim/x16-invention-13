@@ -1,0 +1,179 @@
+rem
+rem  this is an envelope test, in basic.
+rem
+
+longvar \voice.envelope
+longvar \voice.state
+longvar \voice.target
+longvar \envelope.attack
+longvar \envelope.decay
+longvar \envelope.sustain
+longvar \envelope.release
+
+longvar \state
+longvar \target
+
+\voice.envelope   = $200
+\voice.state      = $210
+\voice.target     = $220
+\envelope.attack  = $230
+\envelope.decay   = $230
+\envelope.sustain = $230
+\envelope.release = $230
+
+rem
+rem this is a demo using the first 13 bars of bach's invention 13
+rem i.e. the part of the song used by cbm in their ads.
+rem
+
+{:play music}
+poke $9f22,0 :rem set vera auto-increment to 0
+
+sk = 0            :rem skip notes
+sg = $f9c0        :rem psg
+rem  sg           :rem freq lo
+rem  sg+1         :rem freq hi
+rem  sg+2         :rem vol
+rem  sg+3         :rem waveform duty cycle
+lr = %11000000    :rem stereo
+w(0) = %00000000  :rem waveform 1
+w(1) = %10000000  :rem waveform 2
+w(2) = %11000000  :rem waveform 3
+pu = 63           :rem pulse duty cycle = 50%
+
+rem 
+rem frequencies
+rem
+longvar \frequency
+\frequency = 1000
+
+rem
+rem set voice
+rem
+i=0
+
+sr = sg + 16 * i
+vpoke 1,sr,0
+vpoke 1,sr+1,0
+v = 50 :rem vol
+vpoke 1,sr+2, lr + v
+vpoke 1,sr+3, w(i) + pu
+poke \voice.envelope, 1 :rem assign to envelope 1
+
+rem
+rem  configure envelope 1
+rem
+
+poke \envelope.attack  + 1, 250 :rem attack
+poke \envelope.decay   + 1, 250 :rem decay
+poke \envelope.sustain + 1, 250 :rem sustain
+poke \envelope.release + 1, 250 :rem release
+
+
+sr = sg + 16 * i
+f = \frequency
+fl = f and 255
+fh = int(f/256)
+vpoke 1,sr+0 ,fl
+vpoke 1,sr+1 ,fh
+
+for x = 1 to v step 64 / peek(\envelope.attack+1)
+   vpoke 1,sr+2,lr+x
+   for t=1 to 100 :next t
+next x
+
+for x = v to 1 step 64 / peek(\envelope.decay+1)
+   vpoke 1,sr+2,lr+x
+   for t=1 to 100 :next t
+next
+
+end
+
+rem 
+rem done - turn off voice
+rem
+sr = sg + 16 * i
+vpoke 1,sr+2,0
+vpoke 1,sr+3,0
+
+end
+
+rem -------------------------------------------------
+rem
+rem  envelope interrupt
+rem
+rem -------------------------------------------------
+{:envelope interrupt}
+i=0 :rem voice 0 only
+
+\state = peek(\voice.state + i)
+\target = peek(\voice.target + i)
+sr = sg + 16 * i
+v = vpeek(1,sr+2) and 63
+
+rem skip if this is in a final state
+if \state = asc("x") goto {:skip voice envelope}
+
+if \state = 65 goto {:attack}
+if \state = 68 goto {:decay}
+if \state = 83 goto {:sustain}
+if \state = 82 goto {:release}
+if \state = 255 goto {:finalize}
+
+rem
+rem initialize 
+rem
+print "initialize" \target
+poke \voice.state + i, 65
+poke \voice.target + i, v
+vpoke 1, sr+2, 0+lr
+\state = 65
+\target = peek(\envelope.attack)
+
+rem
+rem attack
+rem
+{:attack}
+if v = \target then \state = 68 :\target = peek(\envelope.decay) :goto {:decay}
+print "attack " v " " \target 
+vpoke 1, sr+2, v+1+lr
+goto {:skip voice envelope}
+
+rem
+rem decay
+rem
+{:decay}
+if v = \target then \state = 83 :\target = peek(\envelope.sustain) :goto {:sustain}
+print "decay  " v " " \target 
+vpeek 1, sr+2, v-1
+goto {:skip voice envelope}
+  
+rem
+rem sustain
+rem
+{:sustain}
+if \target = 0 then \state = 82 :\target = peek(\envelope.release) :goto {:release}
+print "sustain" \target 
+poke \voice.target + i, \target - 1
+goto {:skip voice envelope}
+
+rem
+rem release
+rem
+{:release}
+if v = 0 then \state = 255 :goto {:finalize}
+print "release" v
+vpoke 1, sr+2, v-1+lr
+goto {:skip voice envelope}
+
+rem
+rem finalize
+rem
+{:finalize}
+print "finalized"
+vpoke 1, sr+2, 0+lr
+
+{:skip voice envelope}
+return
+
+
